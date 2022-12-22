@@ -123,20 +123,25 @@ fun move(instruction: String): (tabula: MutableMap<Int, LinkedList<Char>>) -> Un
     return {
         val regex = "move (\\d+) from (\\d+) to (\\d)".toRegex()
         val result = regex.find(instruction)
-        val (required, source, target) = result!!.destructured
+        try {
+            val (required, source, target) = result!!.destructured
 
-        val sourceStack = it[source.toInt()]
-        val targetStack = it[target.toInt()]
+            val sourceStack = it[source.toInt()]
+            val targetStack = it[target.toInt()]
 
-
-        when(required.toInt()){
-            1 -> {
-                targetStack!!.addFirst(sourceStack!!.pop())
+            when(required.toInt()){
+                1 -> {
+                    targetStack!!.addFirst(sourceStack!!.pop())
+                }
+                else -> {
+                    targetStack!!.addAll(0, sourceStack!!.subList(0, required.toInt()))
+                    it[source.toInt()] = LinkedList(sourceStack.drop(required.toInt()))
+                }
             }
-            else -> {
-                targetStack!!.addAll(0, sourceStack!!.subList(0, required.toInt()))
-                it[source.toInt()] = LinkedList(sourceStack.drop(required.toInt()))
-            }
+
+        } catch (e : Exception){
+            println("Something went wrong")
+            e.printStackTrace()
         }
 
     }
@@ -184,12 +189,9 @@ fun main(){
             }
             Line.INSTRUCTION -> {
                 val move = move(it)
-                try {
-                    move(stacks)
-                } catch (e : Exception){
-                    println("Something went wrong")
-                    e.printStackTrace()
-                }
+                
+                move(stacks)
+                
             }
         }
     }
