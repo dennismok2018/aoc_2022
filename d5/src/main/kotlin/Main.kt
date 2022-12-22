@@ -184,7 +184,12 @@ fun main(){
             }
             Line.INSTRUCTION -> {
                 val move = move(it)
-                move(stacks)
+                try {
+                    move(stacks)
+                } catch (e : Exception){
+                    println("Something went wrong")
+                    e.printStackTrace()
+                }
             }
         }
     }
