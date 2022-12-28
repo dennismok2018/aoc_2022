@@ -1,4 +1,3 @@
-
 import java.io.File
 
 //Q1
@@ -112,7 +111,7 @@ import java.io.File
 //}
 
 //Q2
-fun main(){
+fun main() {
     val filePath = "/home/dm/projects/aoc_2022/d8/input"
 
     // a 2d int array representing input
@@ -132,51 +131,51 @@ fun main(){
     val result = mutableMapOf<Int, MutableList<Int>>()
 
     // Populating boolean array: horizontally
-    for (i in 0 until tabula.size){
-        val r = result.getOrDefault(i, MutableList(tabula[0]!!.size){0})
-        for (j in 0 until tabula[0]!!.size){
+    for (i in 0 until tabula.size) {
+        val r = result.getOrDefault(i, MutableList(tabula[0]!!.size) { 0 })
+        for (j in 0 until tabula[0]!!.size) {
             val height = tabula[i]!![j]
 
             var level = 1
             var up = 0
-            while (i - level != -1 ){
-                val t = tabula[i-level]!![j]
+            while (i - level != -1) {
+                val t = tabula[i - level]!![j]
                 up++
-                if (height > t){
+                if (height > t) {
                     level++
-                }else {
+                } else {
                     break
                 }
             }
 
             level = 1
             var down = 0
-            while (i + level != tabula.size){
-                val t = tabula[i+level]!![j]
+            while (i + level != tabula.size) {
+                val t = tabula[i + level]!![j]
                 down++
-                if (height > t){
+                if (height > t) {
                     level++
-                }else {
+                } else {
                     break
                 }
             }
             level = 1
             var left = 0
-            while (j - level != -1 ){
+            while (j - level != -1) {
                 val t = tabula[i]!![j - level]
                 left++
-                if (height > t){
+                if (height > t) {
                     level++
-                }else {
+                } else {
                     break
                 }
             }
             level = 1
             var right = 0
-            while (j + level != tabula[0]!!.size){
+            while (j + level != tabula[0]!!.size) {
                 val t = tabula[i]!![j + level]
                 right++
-                if (height > t){
+                if (height > t) {
                     level++
                 } else {
                     break
@@ -185,14 +184,14 @@ fun main(){
             val scores = arrayOf(up, down, left, right)
             println("Sc $scores")
             val score = scores.filter {
-                it != 0 }.reduce {
-                    acc, v -> acc * v
-                }
+                it != 0
+            }.reduce { acc, v ->
+                acc * v
+            }
             r[j] = score
         }
         result[i] = r
     }
-
 
 
 //    println()
