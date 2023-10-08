@@ -1,0 +1,6 @@
+(executable
+ (name d11)
+ (preprocess (pps ppx_deriving.show))
+ )
+
+
