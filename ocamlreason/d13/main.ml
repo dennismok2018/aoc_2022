@@ -114,7 +114,7 @@ let parse tokens =
   match tokens with
   | [] -> []
   | LEFT_BRACKET :: _ -> aux tokens []
-  | _ -> raise (invalid_arg "unrecofnized token")
+  | _ -> invalid_arg "unhandled case"
 ;;
 
 let populate_with line =
@@ -138,7 +138,7 @@ let rec print_parsed = function
     print_string "(Nested: [";
     let _ = List.map (fun n -> print_parsed n) nodes in
     print_string "])"
-  | Singleton _ -> raise (invalid_arg "!")
+  | _ -> invalid_arg "unhandled case"
 ;;
 
 let load_input filepath =
