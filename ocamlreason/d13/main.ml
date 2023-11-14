@@ -99,15 +99,15 @@ type line_t =
   | Line_2
 
 type node_t =
-  | Num of int
-  | Values of node_t list
+  | Singleton of int list
+  | Nested of node_t list
 
 let parse tokens =
   let rec aux tokens acc =
     match tokens with
     | [] -> acc
-    | NUMBER n :: rest -> aux rest (Num n :: acc)
-    | LEFT_BRACKET :: rest -> [ Values (aux rest []) ]
+    | NUMBER n :: rest -> aux rest (Singleton [ n ] :: acc)
+    | LEFT_BRACKET :: rest -> [ Nested (aux rest []) ]
     | RIGHT_BRACKET :: _ -> aux [] acc
     | COMMA :: rest -> aux rest acc
   in
@@ -133,11 +133,12 @@ let populate_with line =
 (*   print_endline "" *)
 
 let rec print_parsed = function
-  | Num n -> print_string ("Num:" ^ string_of_int n ^ ", ")
-  | Values nodes ->
-    print_string "Values: [";
+  | Singleton (n :: []) -> print_string ("(Singleton:[" ^ string_of_int n ^ "]), ")
+  | Nested nodes ->
+    print_string "(Nested: [";
     let _ = List.map (fun n -> print_parsed n) nodes in
-    print_string "]"
+    print_string "])"
+  | Singleton _ -> raise (invalid_arg "!")
 ;;
 
 let load_input filepath =
@@ -149,12 +150,14 @@ let load_input filepath =
     | Blank ->
       line1 := populate_with line;
       (* print_tokens !line1; *)
-      let _ = List.map print_parsed !line1 in 
+      let _ = List.map print_parsed !line1 in
+      print_endline "";
       last_line := Line_1
     | Line_1 ->
       line2 := populate_with line;
       (* print_tokens !line2; *)
-      let _ = List.map print_parsed !line2 in 
+      let _ = List.map print_parsed !line2 in
+      print_endline "";
       print_endline "";
       last_line := Line_2
     | Line_2 ->
