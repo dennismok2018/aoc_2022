@@ -1,0 +1,4 @@
+(executable
+ (public_name d13)
+ (name main)
+ (libraries d13 str))
