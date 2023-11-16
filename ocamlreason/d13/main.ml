@@ -88,7 +88,7 @@ let lex str =
       else (
         let c = String.get rest 0 in
         invalid_character c;
-        tokenize (pos + 1)))
+        invalid_arg "SHIT"))
   in
   tokenize 0
 ;;
@@ -99,21 +99,36 @@ type line_t =
   | Line_2
 
 type node_t =
-  | Singleton of int list
-  | Nested of node_t list
+  | N of int
+  | List of node_t list
+
+let print_tokens tokens =
+  let _ =
+    List.map
+      (function
+       | LEFT_BRACKET -> print_string "["
+       | RIGHT_BRACKET -> print_string "]"
+       | COMMA -> print_string ","
+       | NUMBER n -> string_of_int n |> print_string)
+      tokens
+  in
+  print_endline ""
+;;
 
 let parse tokens =
+  let _ = print_tokens tokens in
   let rec aux tokens acc =
     match tokens with
-    | [] -> acc
-    | NUMBER n :: rest -> aux rest (Singleton [ n ] :: acc)
-    | LEFT_BRACKET :: rest -> [ Nested (aux rest []) ]
-    | RIGHT_BRACKET :: _ -> aux [] acc
+    | [] -> [], List.rev acc
+    | NUMBER n :: rest -> aux rest (N n :: acc)
+    | LEFT_BRACKET :: rest ->
+      (match aux rest [] with
+       | right, returned -> aux right (List returned :: acc))
+    | RIGHT_BRACKET :: rest -> rest, List.rev acc
     | COMMA :: rest -> aux rest acc
   in
-  match tokens with
-  | [] -> []
-  | LEFT_BRACKET :: _ -> aux tokens []
+  match aux tokens [] with
+  | [], acc -> List.hd acc
   | _ -> invalid_arg "unhandled case"
 ;;
 
@@ -123,65 +138,63 @@ let populate_with line =
   nodes
 ;;
 
-(* let print_tokens tokens = *)
-(*   let _ =  List.map (function *)
-(*   | LEFT_BRACKET -> print_string "[" *)
-(*   | RIGHT_BRACKET -> print_string "]" *)
-(*   | COMMA -> print_string "," *)
-(*   | NUMBER n -> string_of_int n |> print_string *)
-(*   ) tokens in *)
-(*   print_endline "" *)
-
 let rec print_parsed = function
-  | Singleton (n :: []) -> print_string ("(Singleton:[" ^ string_of_int n ^ "]), ")
-  | Nested nodes ->
-    print_string "(Nested: [";
+  | N n -> print_string ("(N:" ^ string_of_int n ^ ")")
+  | List nodes ->
+    print_string "(List: [";
     let _ = List.map (fun n -> print_parsed n) nodes in
     print_string "])"
-  | _ -> invalid_arg "unhandled case"
 ;;
 
 let load_input filepath =
   let last_line = ref Blank in
-  let line1, line2 = ref [], ref [] in
+  let line1, line2 = ref (List []), ref (List []) in
   let pairs = ref [] in
   consume_input_text_line_by_line ~filepath ~consume:(fun line ->
     match !last_line with
     | Blank ->
       line1 := populate_with line;
-      (* print_tokens !line1; *)
-      let _ = List.map print_parsed !line1 in
+      let _ = print_parsed !line1 in
       print_endline "";
       last_line := Line_1
     | Line_1 ->
-      line2 := populate_with line;
-      (* print_tokens !line2; *)
-      let _ = List.map print_parsed !line2 in
+      line1 := populate_with line;
+      let _ = print_parsed !line2 in
       print_endline "";
       print_endline "";
       last_line := Line_2
     | Line_2 ->
       pairs := (!line1, !line2) :: !pairs;
       last_line := Blank);
-  !pairs
+  List.rev !pairs
 ;;
 
-(* let rec compare_2_lsts a_lst b_lst =
-   let compare_internals a_lst b_lst =
-   match a_lst, b_lst with
-   | [], [] -> true
-   | [], _ :: _ -> true
-   | _ :: _, [] -> false
-   | head_a :: tail_a, head_b :: tail_b ->
-   if head_a > head_b then false else compare_2_lsts tail_a tail_b
-   in
-   if List.length a_lst > List.length b_lst then false else compare_internals a_lst b_lst
-   ;; *)
+let rec compare_2_lsts a_lst b_lst =
+  let compare_internals a_lst b_lst =
+    match a_lst, b_lst with
+    | [], [] -> true
+    | [], _ :: _ -> true
+    | _ :: _, [] -> false
+    | head_a :: tail_a, head_b :: tail_b ->
+      if head_a > head_b then false else compare_2_lsts tail_a tail_b
+  in
+  if List.length a_lst > List.length b_lst then false else compare_internals a_lst b_lst
+;;
 
 (*  *)
 let run () =
-  let _ = load_input "./input" in
-  ()
+  let pairs = load_input "./input" in
+  let adds =
+    List.mapi
+      (fun i (n1, n2) ->
+        match n1, n2 with
+        | List lst1, List lst2 -> if compare_2_lsts lst1 lst2 then i + 1 else 0
+        | _ -> invalid_arg "unhandled case")
+      pairs
+  in
+  let sum = List.fold_left ( + ) 0 adds in
+  print_int sum;
+  print_endline ""
 ;;
 
 (*  *)
@@ -189,3 +202,24 @@ let run () =
 let _ = run ()
 
 (*  *)
+let run () =
+  let line1 = populate_with "[9]" in
+  let line2 = populate_with "[[8,7,6]]" in
+  let _ = print_parsed line1 in
+  print_endline "";
+  let _ = print_parsed line2 in
+  print_endline "";
+  let adds =
+    List.mapi
+      (fun i (n1, n2) ->
+        match n1, n2 with
+        | List lst1, List lst2 -> if compare_2_lsts lst1 lst2 then i + 1 else 0
+        | _ -> invalid_arg "unhandled case")
+      [ line1, line2 ]
+  in
+  let sum = List.fold_left ( + ) 0 adds in
+  print_int sum;
+  print_endline ""
+;;
+
+let _ = run ()
