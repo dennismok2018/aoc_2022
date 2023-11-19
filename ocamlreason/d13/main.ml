@@ -115,6 +115,14 @@ let print_tokens tokens =
   print_endline ""
 ;;
 
+let rec print_parsed = function
+  | N n -> print_string ("(N:" ^ string_of_int n ^ ")")
+  | List nodes ->
+    print_string "(List: [";
+    let _ = List.map (fun n -> print_parsed n) nodes in
+    print_string "])"
+;;
+
 let parse tokens =
   let _ = print_tokens tokens in
   let rec aux tokens acc =
@@ -138,14 +146,6 @@ let populate_with line =
   nodes
 ;;
 
-let rec print_parsed = function
-  | N n -> print_string ("(N:" ^ string_of_int n ^ ")")
-  | List nodes ->
-    print_string "(List: [";
-    let _ = List.map (fun n -> print_parsed n) nodes in
-    print_string "])"
-;;
-
 let load_input filepath =
   let last_line = ref Blank in
   let line1, line2 = ref (List []), ref (List []) in
@@ -158,27 +158,44 @@ let load_input filepath =
       print_endline "";
       last_line := Line_1
     | Line_1 ->
-      line1 := populate_with line;
+      line2 := populate_with line;
       let _ = print_parsed !line2 in
       print_endline "";
       print_endline "";
-      last_line := Line_2
-    | Line_2 ->
-      pairs := (!line1, !line2) :: !pairs;
-      last_line := Blank);
+      last_line := Line_2;
+      pairs := (!line1, !line2) :: !pairs
+    | Line_2 -> last_line := Blank);
   List.rev !pairs
 ;;
 
-let rec compare_2_lsts a_lst b_lst =
-  let compare_internals a_lst b_lst =
+let compare_2_nodes a_node b_node =
+  let rec compare_2_lsts a_lst b_lst =
     match a_lst, b_lst with
-    | [], [] -> true
-    | [], _ :: _ -> true
-    | _ :: _, [] -> false
-    | head_a :: tail_a, head_b :: tail_b ->
-      if head_a > head_b then false else compare_2_lsts tail_a tail_b
+    | [], [] -> 0
+    | [], _ :: _ -> -1
+    | _ :: _, [] -> 1
+    | N a :: a_rest, N b :: b_rest ->
+      (match compare a b with
+       | -1 -> -1
+       | 0 -> compare_2_lsts a_rest b_rest
+       | 1 -> 1
+       | _ -> invalid_arg "not going to happen here")
+    | List a :: a_rest, List b :: b_rest ->
+      (match compare_2_lsts a b with
+       | -1 -> -1
+       | 0 -> compare_2_lsts a_rest b_rest
+       | 1 -> 1
+       | _ -> invalid_arg "not going to happen there")
+    | N a :: a_rest, List _b :: _b_rest -> compare_2_lsts (List [ N a ] :: a_rest) b_lst
+    | List _a :: _a_rest, N b :: b_rest -> compare_2_lsts a_lst (List [ N b ] :: b_rest)
   in
-  if List.length a_lst > List.length b_lst then false else compare_internals a_lst b_lst
+  match a_node, b_node with
+  | List a, List b ->
+    (match compare_2_lsts a b with
+     | -1 -> true
+     | 1 -> false
+     | _ -> invalid_arg "no inner way")
+  | _, _ -> invalid_arg "no way"
 ;;
 
 (*  *)
@@ -187,9 +204,20 @@ let run () =
   let adds =
     List.mapi
       (fun i (n1, n2) ->
-        match n1, n2 with
-        | List lst1, List lst2 -> if compare_2_lsts lst1 lst2 then i + 1 else 0
-        | _ -> invalid_arg "unhandled case")
+        print_endline ("pair" ^ string_of_int (i + 1));
+        print_parsed n1;
+        print_endline "\n---";
+        print_parsed n2;
+        print_endline "";
+        if compare_2_nodes n1 n2
+        then (
+          print_endline "true";
+          print_endline "";
+          i + 1)
+        else (
+          print_endline "false";
+          print_endline "";
+          0))
       pairs
   in
   let sum = List.fold_left ( + ) 0 adds in
@@ -202,24 +230,24 @@ let run () =
 let _ = run ()
 
 (*  *)
-let run () =
-  let line1 = populate_with "[9]" in
-  let line2 = populate_with "[[8,7,6]]" in
-  let _ = print_parsed line1 in
-  print_endline "";
-  let _ = print_parsed line2 in
-  print_endline "";
-  let adds =
-    List.mapi
-      (fun i (n1, n2) ->
-        match n1, n2 with
-        | List lst1, List lst2 -> if compare_2_lsts lst1 lst2 then i + 1 else 0
-        | _ -> invalid_arg "unhandled case")
-      [ line1, line2 ]
-  in
-  let sum = List.fold_left ( + ) 0 adds in
-  print_int sum;
-  print_endline ""
-;;
-
-let _ = run ()
+(* let run () = *)
+(*   let line1 = populate_with "[1,1,3,1,1]" in *)
+(*   let line2 = populate_with "[1,1,5,1,1]" in *)
+(*   let _ = print_parsed line1 in *)
+(*   print_endline ""; *)
+(*   let _ = print_parsed line2 in *)
+(*   print_endline ""; *)
+(*   let adds = *)
+(*     List.mapi *)
+(*       (fun i (n1, n2) -> *)
+(*         match n1, n2 with *)
+(*         | List lst1, List lst2 -> if compare_2_nodes lst1 lst2 then i + 1 else 0 *)
+(*         | _ -> invalid_arg "unhandled case") *)
+(*       [ line1, line2 ] *)
+(*   in *)
+(*   let sum = List.fold_left ( + ) 0 adds in *)
+(*   print_int sum; *)
+(*   print_endline "" *)
+(* ;; *)
+(**)
+(* let _ = run () *)
