@@ -179,75 +179,51 @@ let compare_2_nodes a_node b_node =
        | -1 -> -1
        | 0 -> compare_2_lsts a_rest b_rest
        | 1 -> 1
-       | _ -> invalid_arg "not going to happen")
+       | _ -> invalid_arg "not going to happen here")
     | List a :: a_rest, List b :: b_rest ->
       (match compare_2_lsts a b with
        | -1 -> -1
        | 0 -> compare_2_lsts a_rest b_rest
        | 1 -> 1
-       | _ -> invalid_arg "not going to happen")
+       | _ -> invalid_arg "not going to happen there")
     | N a :: a_rest, List _b :: _b_rest -> compare_2_lsts (List [ N a ] :: a_rest) b_lst
     | List _a :: _a_rest, N b :: b_rest -> compare_2_lsts a_lst (List [ N b ] :: b_rest)
   in
   match a_node, b_node with
   | List a, List b ->
     (match compare_2_lsts a b with
-     | -1 -> true
-     | 1 -> false
-     | _ -> invalid_arg "noway")
+     | -1 -> -1
+     | 1 -> 1
+     | 0 -> 0
+     | _ -> invalid_arg "no inner way")
   | _, _ -> invalid_arg "no way"
 ;;
+
+(**)
+
+let divider1 = lex "[[2]]" |> parse
+let divider2 = lex "[[6]]" |> parse
 
 (*  *)
 let run () =
   let pairs = load_input "./input" in
-  let adds =
+  let flatten = List.fold_left (fun acc (t1, t2) -> t1 :: t2 :: acc) [] pairs in
+  let to_be_sorted = divider1 :: divider2 :: flatten in
+  let sorted = List.sort compare_2_nodes to_be_sorted in
+  let i1 =
     List.mapi
-      (fun i (n1, n2) ->
-        print_endline ("pair" ^ string_of_int (i + 1));
-        print_parsed n1;
-        print_endline "\n---";
-        print_parsed n2;
-        print_endline "";
-        if compare_2_nodes n1 n2
-        then (
-          print_endline "true";
-          print_endline "";
-          i + 1)
-        else (
-          print_endline "false";
-          print_endline "";
-          0))
-      pairs
+      (fun i node -> if compare_2_nodes node divider1 = 0 then i + 1 else 0)
+      sorted
   in
-  let sum = List.fold_left ( + ) 0 adds in
-  print_int sum;
-  print_endline ""
+  let i2 =
+    List.mapi
+      (fun i node -> if compare_2_nodes node divider2 = 0 then i + 1 else 0)
+      sorted
+  in
+  let product = List.fold_left ( + ) 0 i1 * List.fold_left ( + ) 0 i2 in
+  string_of_int product |> print_endline
 ;;
 
 (*  *)
 
 let _ = run ()
-
-(*  *)
-(* let run () = *)
-(*   let line1 = populate_with "[1,1,3,1,1]" in *)
-(*   let line2 = populate_with "[1,1,5,1,1]" in *)
-(*   let _ = print_parsed line1 in *)
-(*   print_endline ""; *)
-(*   let _ = print_parsed line2 in *)
-(*   print_endline ""; *)
-(*   let adds = *)
-(*     List.mapi *)
-(*       (fun i (n1, n2) -> *)
-(*         match n1, n2 with *)
-(*         | List lst1, List lst2 -> if compare_2_nodes lst1 lst2 then i + 1 else 0 *)
-(*         | _ -> invalid_arg "unhandled case") *)
-(*       [ line1, line2 ] *)
-(*   in *)
-(*   let sum = List.fold_left ( + ) 0 adds in *)
-(*   print_int sum; *)
-(*   print_endline "" *)
-(* ;; *)
-(**)
-(* let _ = run () *)
